@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Smart Energy Meter — Arduino Dashboard</title>
+<title>Smart Energy Meter System</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
   body{background:#f0f4f8;font-family:'Segoe UI',sans-serif;}
   .sidebar{width:235px;min-height:100vh;position:fixed;top:0;left:0;
-    background:linear-gradient(180deg,#0f2027,#203a43,#2c5364);
+    background:linear-gradient(180deg,#1a1a2e,#16213e,#0f3460);
     padding-top:20px;z-index:100;}
   .sidebar .brand{color:#fbbf24;font-size:1.15rem;font-weight:700;
     padding:10px 20px 20px;border-bottom:1px solid #ffffff15;}
@@ -22,57 +22,51 @@
   .topbar{background:white;border-radius:14px;padding:14px 22px;margin-bottom:22px;
     display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 12px #0001;}
 
-  /* Metric cards */
-  .m-card{border:none;border-radius:18px;padding:20px;color:white;
+  /* Meter cards */
+  .m-card{border:none;border-radius:18px;padding:22px;color:white;
     position:relative;overflow:hidden;box-shadow:0 6px 20px #0002;transition:transform .2s;}
   .m-card:hover{transform:translateY(-3px);}
   .m-card .val{font-size:2rem;font-weight:700;line-height:1.1;}
-  .m-card .unit{font-size:.8rem;opacity:.8;}
+  .m-card .unit{font-size:.85rem;opacity:.8;}
   .m-card .lbl{font-size:.75rem;opacity:.7;margin-bottom:4px;}
   .m-card .ico{font-size:3.5rem;opacity:.12;position:absolute;right:10px;bottom:8px;}
 
   /* LCD Panel */
-  .lcd-panel{background:#111;border-radius:12px;padding:20px;
-    font-family:'Courier New',monospace;border:3px solid #333;
-    box-shadow:0 0 20px #fbbf2420,inset 0 0 15px #000;}
-  .lcd-line{color:#fbbf24;font-size:1.3rem;font-weight:700;
-    letter-spacing:2px;text-shadow:0 0 10px #fbbf24;
-    min-height:28px;line-height:1.6;}
-  .lcd-label{color:#666;font-size:.65rem;letter-spacing:2px;margin-bottom:6px;}
+  .lcd-panel{background:#1a2e1a;border:4px solid #2d4a2d;border-radius:12px;
+    padding:16px 20px;font-family:'Courier New',monospace;color:#4ade80;
+    font-size:1.05rem;box-shadow:0 0 20px #4ade8020,inset 0 0 10px #000;}
+  .lcd-row{white-space:pre;letter-spacing:1px;line-height:1.8;}
+  .lcd-label{font-size:.65rem;color:#666;text-align:center;margin-top:6px;letter-spacing:1px;}
+
+  /* Appliance toggles */
+  .app-card{background:white;border-radius:14px;padding:16px;box-shadow:0 2px 10px #0001;
+    border:2px solid transparent;transition:all .2s;cursor:pointer;}
+  .app-card.on{border-color:#22c55e;background:#f0fdf4;}
+  .app-card.off{border-color:#e5e7eb;opacity:.7;}
+  .app-icon{font-size:2rem;margin-bottom:6px;}
+  .app-watts{font-size:.8rem;color:#888;}
 
   /* Chart card */
   .chart-card{background:white;border-radius:18px;padding:22px;
     box-shadow:0 3px 15px #0001;margin-bottom:20px;}
 
-  /* Appliance toggle */
-  .app-item{background:#f8f9fa;border-radius:12px;padding:12px 16px;
-    margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;
-    cursor:pointer;transition:.2s;}
-  .app-item:hover{background:#fff3cd;}
-  .app-item.on-state{border-left:4px solid #22c55e;}
-  .app-item.off-state{border-left:4px solid #9ca3af;}
-
   /* GSM */
-  .gsm-card{background:#0f2027;border-radius:15px;padding:20px;color:white;
-    border:1px solid #fbbf2430;}
-  .gsm-msg{font-family:'Courier New',monospace;font-size:.78rem;
-    background:#0a0a0a;padding:10px;border-radius:8px;color:#4ade80;
-    max-height:120px;overflow-y:auto;}
+  .gsm-msg{background:#1a1a2e;border-radius:10px;padding:10px 14px;
+    font-family:'Courier New',monospace;font-size:.78rem;color:#4ade80;margin-bottom:6px;}
 
-  /* Billing tiers */
-  .tier-row{padding:8px 12px;border-radius:10px;margin-bottom:6px;
-    display:flex;justify-content:space-between;align-items:center;}
-
-  /* Stats box */
+  /* Stats */
   .stat-box{background:#f8f9fa;border-radius:12px;padding:12px;text-align:center;}
   .stat-box .sv{font-size:1.3rem;font-weight:700;}
   .card-plain{background:white;border-radius:18px;padding:22px;box-shadow:0 3px 15px #0001;}
+
+  /* Billing meter */
+  .bill-meter{background:linear-gradient(135deg,#1a1a2e,#0f3460);
+    border-radius:18px;padding:25px;color:white;text-align:center;}
+  .bill-amount{font-size:3rem;font-weight:700;color:#fbbf24;}
+
   .blink{animation:blink 1.5s infinite;}
   @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
   .alert-bar{border-radius:12px;}
-
-  /* Form switch */
-  .form-check-input:checked{background-color:#22c55e;border-color:#22c55e;}
 </style>
 </head>
 <body>
@@ -81,36 +75,36 @@
 <div class="sidebar">
   <div class="brand"><i class="fas fa-bolt me-2"></i>EnergyMeter</div>
   <nav class="nav flex-column mt-3">
-    <a class="nav-link active" href="#"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a>
-    <a class="nav-link" href="#lcd"><i class="fas fa-tv me-2"></i>LCD Display</a>
+    <a class="nav-link active" href="#top"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a>
+    <a class="nav-link" href="#lcd"><i class="fas fa-desktop me-2"></i>LCD Display</a>
     <a class="nav-link" href="#appliances"><i class="fas fa-plug me-2"></i>Appliances</a>
-    <a class="nav-link" href="#billing"><i class="fas fa-rupee-sign me-2"></i>Billing</a>
     <a class="nav-link" href="#charts"><i class="fas fa-chart-line me-2"></i>Charts</a>
+    <a class="nav-link" href="#billing"><i class="fas fa-file-invoice-dollar me-2"></i>Billing</a>
     <a class="nav-link" href="#logs"><i class="fas fa-table me-2"></i>Data Log</a>
-    <a class="nav-link" href="#gsm"><i class="fas fa-sms me-2"></i>GSM Billing</a>
   </nav>
   <div class="p-4 position-absolute bottom-0 w-100">
-    <div class="text-white-50 small text-center mb-1">Arduino + ACS712 + SIM900</div>
+    <div class="text-white-50 small text-center mb-2">Arduino + ACS712 + SIM900</div>
     <div class="text-center mb-2">
       <span class="blink" style="color:#fbbf24;">●</span>
       <span class="text-white-50 small ms-1">Live metering</span>
     </div>
-    <a href="/api/export" class="btn btn-sm btn-outline-warning rounded-pill w-100">
+    <a href="/api/export" class="btn btn-sm btn-outline-light rounded-pill w-100">
       <i class="fas fa-download me-1"></i>Export CSV</a>
   </div>
 </div>
 
 <!-- Main -->
-<div class="main">
+<div class="main" id="top">
   <!-- Topbar -->
   <div class="topbar">
     <div>
       <h5 class="mb-0 fw-bold"><i class="fas fa-bolt me-2 text-warning"></i>Smart Energy Meter System</h5>
-      <small class="text-muted">Arduino + ACS712 (A1) + Voltage Divider (A0) + SIM900 GSM + 16×2 LCD</small>
+      <small class="text-muted">Arduino Mega · ACS712 (A1) · Voltage Divider (A0) · SIM900 GSM · LCD 16×2</small>
     </div>
     <div class="d-flex align-items-center gap-3">
-      <span class="badge rounded-pill px-3 py-2 fs-6" id="status-badge"
-            style="background:#fef3c7;color:#92400e;">⚡ Loading...</span>
+      <span class="badge rounded-pill px-3 py-2 fs-6 bg-warning text-dark">
+        <i class="fas fa-bolt me-1"></i>Rs. <span id="top-bill">0.00</span>
+      </span>
       <span class="text-muted small"><i class="fas fa-clock me-1"></i><span id="clock">--:--:--</span></span>
     </div>
   </div>
@@ -118,259 +112,244 @@
   <!-- Alerts -->
   <div id="alerts-section" class="mb-3"></div>
 
-  <!-- Metric Cards -->
+  <!-- Meter Cards -->
   <div class="row g-3 mb-4">
     <div class="col-md-2">
       <div class="m-card" style="background:linear-gradient(135deg,#f093fb,#f5576c);">
-        <div class="lbl"><i class="fas fa-bolt me-1"></i>Voltage (Vrms)</div>
-        <div class="val" id="s-vrms">--</div>
-        <div class="unit">V</div>
+        <div class="lbl"><i class="fas fa-bolt me-1"></i>Voltage (A0)</div>
+        <div class="val" id="s-volt">--</div>
+        <div class="unit">Volts AC</div>
         <div class="ico"><i class="fas fa-bolt"></i></div>
       </div>
     </div>
     <div class="col-md-2">
       <div class="m-card" style="background:linear-gradient(135deg,#4facfe,#00f2fe);">
-        <div class="lbl"><i class="fas fa-wave-square me-1"></i>Current (Irms)</div>
-        <div class="val" id="s-irms">--</div>
-        <div class="unit">A</div>
-        <div class="ico"><i class="fas fa-wave-square"></i></div>
+        <div class="lbl"><i class="fas fa-tachometer-alt me-1"></i>Current (A1)</div>
+        <div class="val" id="s-curr">--</div>
+        <div class="unit">Amps</div>
+        <div class="ico"><i class="fas fa-tachometer-alt"></i></div>
       </div>
     </div>
     <div class="col-md-2">
       <div class="m-card" style="background:linear-gradient(135deg,#43e97b,#38f9d7);">
-        <div class="lbl"><i class="fas fa-fire me-1"></i>Active Power</div>
+        <div class="lbl"><i class="fas fa-plug me-1"></i>Power</div>
         <div class="val" id="s-power">--</div>
-        <div class="unit">W</div>
-        <div class="ico"><i class="fas fa-fire"></i></div>
-      </div>
-    </div>
-    <div class="col-md-2">
-      <div class="m-card" style="background:linear-gradient(135deg,#fa709a,#fee140);">
-        <div class="lbl"><i class="fas fa-battery-full me-1"></i>Energy (Total)</div>
-        <div class="val" id="s-sumwh" style="font-size:1.5rem;">--</div>
-        <div class="unit">Watt-Hour</div>
-        <div class="ico"><i class="fas fa-battery-full"></i></div>
+        <div class="unit">Watts</div>
+        <div class="ico"><i class="fas fa-plug"></i></div>
       </div>
     </div>
     <div class="col-md-2">
       <div class="m-card" style="background:linear-gradient(135deg,#667eea,#764ba2);">
-        <div class="lbl"><i class="fas fa-rupee-sign me-1"></i>Total Bill</div>
-        <div class="val" id="s-rs" style="font-size:1.5rem;">--</div>
+        <div class="lbl"><i class="fas fa-battery-three-quarters me-1"></i>Energy</div>
+        <div class="val" id="s-kwh">--</div>
+        <div class="unit">kWh Total</div>
+        <div class="ico"><i class="fas fa-battery-three-quarters"></i></div>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="m-card" style="background:linear-gradient(135deg,#fa709a,#fee140);">
+        <div class="lbl"><i class="fas fa-rupee-sign me-1"></i>Bill (Total)</div>
+        <div class="val" id="s-bill">--</div>
         <div class="unit">Rupees</div>
         <div class="ico"><i class="fas fa-rupee-sign"></i></div>
       </div>
     </div>
     <div class="col-md-2">
       <div class="m-card" style="background:linear-gradient(135deg,#11998e,#38ef7d);">
-        <div class="lbl"><i class="fas fa-plug me-1"></i>Active Load</div>
-        <div class="val" id="s-load">--</div>
-        <div class="unit">W total</div>
-        <div class="ico"><i class="fas fa-plug"></i></div>
+        <div class="lbl"><i class="fas fa-leaf me-1"></i>CO2 Saved</div>
+        <div class="val" id="s-co2">--</div>
+        <div class="unit">kg CO2</div>
+        <div class="ico"><i class="fas fa-leaf"></i></div>
       </div>
     </div>
   </div>
 
+  <!-- LCD + Appliances -->
   <div class="row g-4 mb-4">
     <!-- LCD Panel -->
     <div class="col-md-4" id="lcd">
-      <div class="lcd-panel mb-4">
-        <div class="lcd-label">16×2 LCD DISPLAY (Pins 12,11,5,4,3,2)</div>
-        <div class="lcd-line" id="lcd-line1">████ Loading ████</div>
-        <div class="lcd-line" id="lcd-line2">████  . . .  ████</div>
-        <div class="lcd-label mt-2">▲ Mirrors lcd.print() from Project-Code-Report.c</div>
-      </div>
-      <!-- Power Quality -->
-      <div class="card-plain">
-        <h6 class="fw-bold mb-3"><i class="fas fa-chart-pie me-2 text-info"></i>Power Quality</h6>
-        <div class="d-flex justify-content-between mb-2">
-          <span class="text-muted small">Power Factor</span>
-          <strong id="pq-pf">--</strong>
+      <div class="chart-card text-center">
+        <h6 class="fw-bold mb-3"><i class="fas fa-desktop me-2 text-success"></i>LCD 16×2 Display</h6>
+        <div class="lcd-panel">
+          <div class="lcd-row" id="lcd-row1">Loading...</div>
+          <div class="lcd-row" id="lcd-row2">Please wait..</div>
         </div>
-        <div class="d-flex justify-content-between mb-2">
-          <span class="text-muted small">Frequency</span>
-          <strong id="pq-freq">-- Hz</strong>
-        </div>
-        <div class="d-flex justify-content-between mb-2">
-          <span class="text-muted small">THD</span>
-          <strong id="pq-thd">--%</strong>
-        </div>
-        <div class="d-flex justify-content-between mb-2">
-          <span class="text-muted small">ADC Voltage (A0)</span>
-          <span class="small" id="hw-adc-v">-- / --</span>
-        </div>
-        <div class="d-flex justify-content-between">
-          <span class="text-muted small">ADC Current (A1)</span>
-          <span class="small" id="hw-adc-i">-- / --</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Charts -->
-    <div class="col-md-8" id="charts">
-      <div class="chart-card">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h6 class="fw-bold mb-0"><i class="fas fa-chart-line me-2 text-danger"></i>Power & Voltage — Real Time</h6>
-          <span class="badge bg-warning text-dark rounded-pill">
-            <span class="blink">●</span> Live</span>
-        </div>
-        <canvas id="powerChart" height="130"></canvas>
-      </div>
-      <div class="chart-card">
-        <h6 class="fw-bold mb-3"><i class="fas fa-chart-area me-2 text-success"></i>Cumulative Energy (WH) & Cost (Rs.)</h6>
-        <canvas id="energyChart" height="110"></canvas>
-      </div>
-    </div>
-  </div>
-
-  <div class="row g-4 mb-4">
-    <!-- Appliances -->
-    <div class="col-md-4" id="appliances">
-      <div class="card-plain">
-        <h6 class="fw-bold mb-3"><i class="fas fa-plug me-2 text-warning"></i>Appliance Control Panel</h6>
-        <div id="appliance-list">Loading...</div>
-        <div class="small text-muted mt-2">Click to toggle ON/OFF — updates power calculation</div>
-      </div>
-    </div>
-
-    <!-- Billing -->
-    <div class="col-md-4" id="billing">
-      <div class="card-plain">
-        <h6 class="fw-bold mb-3"><i class="fas fa-rupee-sign me-2 text-success"></i>Tariff & Billing</h6>
-        <!-- Tiers from getReading() -->
-        <div class="tier-row" style="background:#dcfce7;">
-          <span class="small fw-semibold">Tier 1: 0–50 WH</span>
-          <span class="badge bg-success">₹3.15/WH</span>
-        </div>
-        <div class="tier-row" style="background:#fef9c3;">
-          <span class="small fw-semibold">Tier 2: 51–100 WH</span>
-          <span class="badge bg-warning text-dark">₹3.60/WH</span>
-        </div>
-        <div class="tier-row" style="background:#ffedd5;">
-          <span class="small fw-semibold">Tier 3: 101–250 WH</span>
-          <span class="badge bg-orange" style="background:#f97316;color:white;">₹4.25/WH</span>
-        </div>
-        <div class="tier-row" style="background:#fee2e2;">
-          <span class="small fw-semibold">Tier 4: >250 WH</span>
-          <span class="badge bg-danger">₹5.20/WH</span>
-        </div>
+        <div class="lcd-label">Arduino → LiquidCrystal (Pin 12,11,5,4,3,2)</div>
         <hr>
-        <div class="d-flex justify-content-between mb-2">
-          <span class="text-muted small">Current Tier</span>
-          <strong id="b-tier" class="small">--</strong>
-        </div>
-        <div class="d-flex justify-content-between mb-2">
-          <span class="text-muted small">Rate</span>
-          <strong id="b-rate">-- ₹/WH</strong>
-        </div>
-        <div class="d-flex justify-content-between mb-2">
-          <span class="text-muted small">Total WH Used</span>
-          <strong id="b-sumwh">--</strong>
-        </div>
-        <div class="d-flex justify-content-between mb-2">
-          <span class="text-muted small">Total Bill</span>
-          <strong class="text-success" id="b-sumrs">-- Rs.</strong>
-        </div>
-        <div class="d-flex justify-content-between">
-          <span class="text-muted small">Monthly Estimate</span>
-          <strong class="text-danger" id="b-monthly">-- Rs.</strong>
-        </div>
-        <button class="btn btn-outline-danger btn-sm rounded-pill w-100 mt-3"
-                onclick="resetMeter()">
-          <i class="fas fa-redo me-1"></i>Reset Meter</button>
-      </div>
-    </div>
-
-    <!-- Stats -->
-    <div class="col-md-4">
-      <div class="card-plain">
-        <h6 class="fw-bold mb-3"><i class="fas fa-calculator me-2 text-info"></i>Session Statistics</h6>
-        <div class="row g-2">
+        <div class="row g-2 mt-2">
           <div class="col-6">
             <div class="stat-box">
-              <div class="text-muted small">Avg Power</div>
-              <div class="sv text-primary" id="st-pavg">--</div>
-              <div style="font-size:.7rem;" class="text-muted">W</div>
+              <div class="text-muted small">Peak Power</div>
+              <div class="sv text-danger" id="peak-power">-- W</div>
             </div>
           </div>
           <div class="col-6">
             <div class="stat-box">
-              <div class="text-muted small">Peak Power</div>
-              <div class="sv text-danger" id="st-pmax">--</div>
-              <div style="font-size:.7rem;" class="text-muted">W</div>
+              <div class="text-muted small">Power Factor</div>
+              <div class="sv text-primary" id="pf-val">--</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="stat-box">
+              <div class="text-muted small">Active Load</div>
+              <div class="sv text-warning" id="active-load">-- W</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="stat-box">
+              <div class="text-muted small">Total Logs</div>
+              <div class="sv text-success" id="total-logs">--</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Appliance Control -->
+    <div class="col-md-8" id="appliances">
+      <div class="chart-card">
+        <h6 class="fw-bold mb-3"><i class="fas fa-plug me-2 text-warning"></i>Appliance Control Panel</h6>
+        <div class="row g-3" id="appliance-grid">
+          <!-- rendered by JS -->
+        </div>
+        <div class="mt-3 small text-muted">
+          <i class="fas fa-info-circle me-1"></i>Click any appliance to toggle ON/OFF.
+          Power consumption updates automatically.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div id="charts" class="row g-4 mb-4">
+    <div class="col-md-8">
+      <div class="chart-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="fw-bold mb-0"><i class="fas fa-chart-line me-2 text-danger"></i>Power & Voltage — Real Time</h6>
+          <span class="badge bg-success rounded-pill px-3">
+            <span class="blink">●</span> Live</span>
+        </div>
+        <canvas id="powerChart" height="130"></canvas>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="chart-card">
+        <h6 class="fw-bold mb-3"><i class="fas fa-battery-half me-2 text-primary"></i>Energy (kWh) Trend</h6>
+        <canvas id="kwhChart" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Billing + GSM -->
+  <div id="billing" class="row g-4 mb-4">
+    <div class="col-md-5">
+      <div class="bill-meter">
+        <div class="small text-white-50 mb-1"><i class="fas fa-file-invoice me-1"></i>Current Bill</div>
+        <div class="bill-amount">₹ <span id="bill-big">0.00</span></div>
+        <div class="text-white-50 small mt-1"><span id="bill-kwh">0.000</span> kWh consumed</div>
+        <hr style="border-color:#ffffff20;">
+        <div class="row g-2 text-center mt-1">
+          <div class="col-4">
+            <div class="text-white-50 small">Slab ≤50Wh</div>
+            <div class="fw-bold">₹3.15/WH</div>
+          </div>
+          <div class="col-4">
+            <div class="text-white-50 small">≤100Wh</div>
+            <div class="fw-bold">₹3.60/WH</div>
+          </div>
+          <div class="col-4">
+            <div class="text-white-50 small">&gt;250Wh</div>
+            <div class="fw-bold">₹5.20/WH</div>
+          </div>
+        </div>
+        <div class="mt-3">
+          <button class="btn btn-warning w-100 rounded-pill fw-bold" onclick="resetMeter()">
+            <i class="fas fa-redo me-2"></i>Reset Meter</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- GSM SMS Billing -->
+    <div class="col-md-7">
+      <div class="chart-card h-100">
+        <h6 class="fw-bold mb-3"><i class="fas fa-sms me-2 text-info"></i>GSM SIM900 — SMS Billing</h6>
+        <div class="input-group mb-3">
+          <span class="input-group-text"><i class="fas fa-mobile-alt"></i></span>
+          <input type="text" id="mobile-input" class="form-control"
+                 placeholder="Customer Mobile Number (10 digits)" value="9876543210">
+          <button class="btn btn-success rounded-end-3" onclick="sendBill()">
+            <i class="fas fa-paper-plane me-1"></i>Send Bill SMS</button>
+        </div>
+        <div class="small text-muted mb-3">
+          Mirrors <code>sendBilling()</code> from arduino code — sends via SIM900 GSM module
+        </div>
+        <div id="gsm-log">
+          <p class="text-muted small">No SMS sent yet. Click "Send Bill SMS" to simulate sending.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats + Log Table -->
+  <div class="row g-4">
+    <div class="col-md-4">
+      <div class="card-plain">
+        <h6 class="fw-bold mb-3"><i class="fas fa-calculator me-2 text-info"></i>Statistics</h6>
+        <div class="row g-2">
+          <div class="col-6">
+            <div class="stat-box">
+              <div class="text-muted small">Avg Power</div>
+              <div class="sv text-primary" id="st-avgpow">-- W</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="stat-box">
+              <div class="text-muted small">Max Power</div>
+              <div class="sv text-danger" id="st-maxpow">-- W</div>
             </div>
           </div>
           <div class="col-6">
             <div class="stat-box">
               <div class="text-muted small">Avg Voltage</div>
-              <div class="sv text-warning" id="st-vavg">--</div>
-              <div style="font-size:.7rem;" class="text-muted">V</div>
+              <div class="sv" id="st-avgvolt">-- V</div>
             </div>
           </div>
           <div class="col-6">
             <div class="stat-box">
-              <div class="text-muted small">Total kWh</div>
-              <div class="sv text-success" id="st-kwh">--</div>
-              <div style="font-size:.7rem;" class="text-muted">kWh</div>
+              <div class="text-muted small">Avg Current</div>
+              <div class="sv" id="st-avgcurr">-- A</div>
             </div>
           </div>
         </div>
-        <hr>
-        <div class="small text-muted">
+        <div class="mt-3 small text-muted">
           <div>📅 First: <span id="st-first">--</span></div>
           <div>🕒 Last: <span id="st-last">--</span></div>
-          <div>📊 Records: <span id="st-count">--</span></div>
         </div>
-        <a href="/api/export" class="btn btn-success btn-sm rounded-pill w-100 mt-3">
-          <i class="fas fa-file-csv me-1"></i>Export Energy Log CSV</a>
+        <div class="mt-3 d-flex gap-2">
+          <a href="/api/export" class="btn btn-success btn-sm rounded-pill flex-fill">
+            <i class="fas fa-download me-1"></i>Export CSV</a>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- GSM Billing Panel -->
-  <div class="row g-4 mb-4" id="gsm">
-    <div class="col-md-6">
-      <div class="gsm-card">
-        <h6 class="fw-bold mb-3" style="color:#fbbf24;">
-          <i class="fas fa-sms me-2"></i>SIM900 GSM — Billing SMS</h6>
-        <div class="mb-3">
-          <label class="form-label small text-white-50">Customer Mobile Number</label>
-          <div class="input-group">
-            <span class="input-group-text" style="background:#1a1a2e;border-color:#333;color:#fbbf24;">
-              <i class="fas fa-phone"></i></span>
-            <input type="text" id="gsm-mobile" class="form-control"
-                   value="+91-9999999999"
-                   style="background:#0a0a0a;color:#eee;border-color:#333;">
-            <button class="btn" style="background:#fbbf24;color:#000;font-weight:600;"
-                    onclick="sendGSM()">
-              <i class="fas fa-paper-plane me-1"></i>Send Bill SMS</button>
-          </div>
-        </div>
-        <div class="small text-white-50 mb-2">📲 AT Command used: AT+CMGS (mirrors sendBilling() in .c file)</div>
-        <div class="gsm-msg" id="gsm-log">
-          <span style="color:#666;">// Waiting for billing request...</span>
-        </div>
-        <div class="mt-2 small" style="color:#fbbf24;">
-          SMS sent: <span id="gsm-count">0</span>
-        </div>
-      </div>
-    </div>
-    <!-- Log Table -->
-    <div class="col-md-6" id="logs">
+    <div class="col-md-8" id="logs">
       <div class="card-plain">
         <div class="d-flex justify-content-between align-items-center mb-3">
-          <h6 class="fw-bold mb-0"><i class="fas fa-table me-2 text-secondary"></i>Energy Log</h6>
-          <span class="badge bg-secondary rounded-pill" id="log-count">0</span>
+          <h6 class="fw-bold mb-0"><i class="fas fa-table me-2 text-secondary"></i>Energy Log (energy_log.csv)</h6>
+          <span class="badge bg-secondary rounded-pill" id="log-count">0 records</span>
         </div>
-        <div class="table-responsive" style="max-height:260px;overflow-y:auto;">
+        <div class="table-responsive" style="max-height:300px;overflow-y:auto;">
           <table class="table table-sm table-hover align-middle mb-0">
             <thead class="sticky-top" style="background:white;">
               <tr>
-                <th>Time</th><th>V</th><th>A</th>
-                <th>Power W</th><th>WH</th><th>Rs.</th>
+                <th>#</th><th>Time</th>
+                <th>Voltage V</th><th>Current A</th>
+                <th>Power W</th><th>Energy kWh</th>
+                <th>Bill Rs.</th>
               </tr>
             </thead>
             <tbody id="log-tbody">
-              <tr><td colspan="6" class="text-center text-muted py-3">Loading...</td></tr>
+              <tr><td colspan="7" class="text-center text-muted py-3">Loading...</td></tr>
             </tbody>
           </table>
         </div>
@@ -382,52 +361,59 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 // ── Charts ──
-const powerCtx  = document.getElementById('powerChart').getContext('2d');
-const energyCtx = document.getElementById('energyChart').getContext('2d');
+const powerCtx = document.getElementById('powerChart').getContext('2d');
+const kwhCtx   = document.getElementById('kwhChart').getContext('2d');
 
-const powerChart = new Chart(powerCtx,{
+const powerChart = new Chart(powerCtx, {
   type:'line',
   data:{labels:[],datasets:[
-    {label:'Power (W)',data:[],borderColor:'#ef4444',backgroundColor:'#ef444415',
+    {label:'Power (W)',data:[],borderColor:'#f5576c',backgroundColor:'#f5576c15',
      tension:.4,fill:true,pointRadius:2,yAxisID:'y1'},
-    {label:'Voltage (V)',data:[],borderColor:'#3b82f6',backgroundColor:'transparent',
+    {label:'Voltage (V)',data:[],borderColor:'#4facfe',backgroundColor:'transparent',
      tension:.4,fill:false,pointRadius:2,yAxisID:'y2'},
   ]},
   options:{responsive:true,animation:false,
     plugins:{legend:{position:'top'}},
     scales:{
-      y1:{type:'linear',position:'left',grid:{color:'#f0f0f0'},title:{display:true,text:'Power (W)'}},
-      y2:{type:'linear',position:'right',grid:{display:false},title:{display:true,text:'Voltage (V)'},
-          min:200,max:260},
+      y1:{type:'linear',position:'left',grid:{color:'#f0f0f0'},
+          title:{display:true,text:'Power (W)'}},
+      y2:{type:'linear',position:'right',grid:{display:false},
+          title:{display:true,text:'Voltage (V)'},min:180,max:250},
       x:{grid:{display:false},ticks:{maxTicksLimit:8,maxRotation:0}}
     }}
 });
 
-const energyChart = new Chart(energyCtx,{
+const kwhChart = new Chart(kwhCtx, {
   type:'line',
   data:{labels:[],datasets:[
-    {label:'Total WH',data:[],borderColor:'#22c55e',backgroundColor:'#22c55e20',
-     tension:.4,fill:true,pointRadius:2,yAxisID:'y1'},
-    {label:'Total Rs.',data:[],borderColor:'#f59e0b',backgroundColor:'transparent',
-     tension:.4,fill:false,pointRadius:2,yAxisID:'y2',borderDash:[5,5]},
+    {label:'kWh',data:[],borderColor:'#667eea',backgroundColor:'#667eea25',
+     tension:.4,fill:true,pointRadius:2}
   ]},
   options:{responsive:true,animation:false,
     plugins:{legend:{position:'top'}},
-    scales:{
-      y1:{type:'linear',position:'left',grid:{color:'#f0f0f0'},title:{display:true,text:'Energy (WH)'}},
-      y2:{type:'linear',position:'right',grid:{display:false},title:{display:true,text:'Cost (Rs.)'}},
-      x:{grid:{display:false},ticks:{maxTicksLimit:8,maxRotation:0}}
-    }}
+    scales:{y:{grid:{color:'#f0f0f0'}},
+            x:{grid:{display:false},ticks:{maxTicksLimit:6,maxRotation:45}}}}
 });
 
-function updateCharts(h){
-  powerChart.data.labels = h.labels;
-  powerChart.data.datasets[0].data = h.power;
-  powerChart.data.datasets[1].data = h.vrms;
-  energyChart.data.labels = h.labels;
-  energyChart.data.datasets[0].data = h.sumWH;
-  energyChart.data.datasets[1].data = h.sumRs;
-  [powerChart, energyChart].forEach(c=>c.update('none'));
+const APPLIANCE_ICONS = {
+  'AC':'❄️','Fridge':'🧊','TV':'📺','Lights':'💡','Fan':'🌀','Washing M':'🫧'
+};
+
+function renderAppliances(apps){
+  const grid = document.getElementById('appliance-grid');
+  grid.innerHTML = Object.entries(apps).map(([name,a])=>
+    `<div class="col-md-4 col-6">
+      <div class="app-card ${a.on?'on':'off'}" onclick="toggleAppliance('${name}')">
+        <div class="app-icon">${APPLIANCE_ICONS[name]||'🔌'}</div>
+        <div class="fw-semibold">${name}</div>
+        <div class="app-watts">${a.watts}W</div>
+        <div class="mt-1">
+          <span class="badge ${a.on?'bg-success':'bg-secondary'} rounded-pill">
+            ${a.on?'ON':'OFF'}</span>
+        </div>
+      </div>
+    </div>`
+  ).join('');
 }
 
 // ── Fetch current ──
@@ -438,54 +424,52 @@ async function fetchCurrent(){
     const c = d.current, s = d.stats;
 
     // Cards
-    document.getElementById('s-vrms').textContent  = c.vrms;
-    document.getElementById('s-irms').textContent  = c.irms;
-    document.getElementById('s-power').textContent = c.power.toFixed ? c.power.toFixed(2) : c.power;
-    document.getElementById('s-sumwh').textContent = parseFloat(c.sumWH).toFixed(2);
-    document.getElementById('s-rs').textContent    = '₹'+parseFloat(c.sumRupees).toFixed(2);
-    document.getElementById('s-load').textContent  = c.active_watts;
+    document.getElementById('s-volt').textContent  = c.voltage;
+    document.getElementById('s-curr').textContent  = c.current;
+    document.getElementById('s-power').textContent = c.power;
+    document.getElementById('s-kwh').textContent   = c.kwh;
+    document.getElementById('s-bill').textContent  = c.sum_rupees;
+    document.getElementById('s-co2').textContent   = c.co2_kg;
+    document.getElementById('top-bill').textContent = c.sum_rupees;
+    document.getElementById('bill-big').textContent = c.sum_rupees;
+    document.getElementById('bill-kwh').textContent = c.kwh;
+    document.getElementById('peak-power').textContent  = c.peak_power+' W';
+    document.getElementById('pf-val').textContent      = c.power_factor;
+    document.getElementById('active-load').textContent = c.active_load+' W';
+    document.getElementById('total-logs').textContent  = c.total_logs;
 
-    // LCD — mirrors lcd.print() from .c file
-    document.getElementById('lcd-line1').textContent = c.lcd1;
-    document.getElementById('lcd-line2').textContent = c.lcd2;
+    // LCD
+    document.getElementById('lcd-row1').textContent =
+      `${c.voltage}v  ${c.current}A`;
+    document.getElementById('lcd-row2').textContent =
+      `${c.power}w  ${c.kwh}kWh`;
 
-    // Power quality
-    document.getElementById('pq-pf').textContent   = c.power_factor;
-    document.getElementById('pq-freq').textContent = c.frequency+' Hz';
-    document.getElementById('pq-thd').textContent  = c.thd+'%';
-    document.getElementById('hw-adc-v').textContent = `${c.adc_v_max} / ${c.adc_v_min}`;
-    document.getElementById('hw-adc-i').textContent = `${c.adc_i_max} / ${c.adc_i_min}`;
-
-    // Status badge
-    const ok = c.vrms >= 200 && c.vrms <= 250 && c.irms < 15;
-    const sb = document.getElementById('status-badge');
-    sb.textContent       = ok ? '⚡ Normal — Grid OK' : '⚠️ Check Required';
-    sb.style.background  = ok ? '#fef3c7' : '#fee2e2';
-    sb.style.color       = ok ? '#92400e' : '#991b1b';
-
-    // Billing
-    document.getElementById('b-tier').textContent   = c.billing_tier;
-    document.getElementById('b-rate').textContent   = '₹'+c.rate_per_wh+'/WH';
-    document.getElementById('b-sumwh').textContent  = parseFloat(c.sumWH).toFixed(4)+' WH';
-    document.getElementById('b-sumrs').textContent  = '₹'+parseFloat(c.sumRupees).toFixed(4);
-    document.getElementById('b-monthly').textContent= '₹'+c.monthly_est+' (est.)';
+    // Appliances
+    if(c.appliances) renderAppliances(c.appliances);
 
     // Stats
     if(s.count){
-      document.getElementById('st-pavg').textContent = s.power_avg;
-      document.getElementById('st-pmax').textContent = s.power_max;
-      document.getElementById('st-vavg').textContent = s.vrms_avg;
-      document.getElementById('st-kwh').textContent  = s.total_kwh;
-      document.getElementById('st-first').textContent= s.first;
-      document.getElementById('st-last').textContent = s.last;
-      document.getElementById('st-count').textContent= s.count;
+      document.getElementById('st-avgpow').textContent  = s.avg_power+' W';
+      document.getElementById('st-maxpow').textContent  = s.max_power+' W';
+      document.getElementById('st-avgvolt').textContent = s.avg_voltage+' V';
+      document.getElementById('st-avgcurr').textContent = s.avg_current+' A';
+      document.getElementById('st-first').textContent   = s.first;
+      document.getElementById('st-last').textContent    = s.last;
     }
 
-    // Appliances
-    renderAppliances(c.appliances);
-
-    // GSM count
-    document.getElementById('gsm-count').textContent = c.gsm_count;
+    // GSM log
+    if(c.gsm_log && c.gsm_log.length){
+      document.getElementById('gsm-log').innerHTML =
+        c.gsm_log.map(g=>
+          `<div class="gsm-msg">
+            <div class="d-flex justify-content-between">
+              <span style="color:#fbbf24;">📱 ${g.mobile}</span>
+              <span style="color:#666;">${g.time}</span>
+            </div>
+            <div class="mt-1">${g.msg}</div>
+          </div>`
+        ).join('');
+    }
 
     // Alerts
     const aDiv = document.getElementById('alerts-section');
@@ -498,56 +482,21 @@ async function fetchCurrent(){
   }catch(e){console.error(e);}
 }
 
-// ── Appliances ──
-function renderAppliances(apps){
-  const el = document.getElementById('appliance-list');
-  el.innerHTML = apps.map((a,i)=>
-    `<div class="app-item ${a.on?'on-state':'off-state'}" onclick="toggleAppliance(${i})">
-      <div>
-        <i class="fas fa-${a.on?'plug':'power-off'} me-2 ${a.on?'text-success':'text-secondary'}"></i>
-        <span class="fw-semibold">${a.name}</span>
-        <span class="text-muted small ms-2">${a.watts}W</span>
-      </div>
-      <span class="badge rounded-pill ${a.on?'bg-success':'bg-secondary'}">${a.on?'ON':'OFF'}</span>
-    </div>`
-  ).join('');
-}
-
-async function toggleAppliance(idx){
-  const r = await fetch('/api/appliance',{method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({index:idx})});
-  const d = await r.json();
-  renderAppliances(d.appliances);
-}
-
-// ── GSM ──
-async function sendGSM(){
-  const mobile = document.getElementById('gsm-mobile').value;
-  const r = await fetch('/api/gsm',{method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({mobile})});
-  const d = await r.json();
-  const log = document.getElementById('gsm-log');
-  const e   = d.entry;
-  log.innerHTML += `<div style="color:#4ade80;">[${e.time}] AT+CMGS="${e.mobile}"</div>` +
-    `<div style="color:#fbbf24;">${e.msg}</div>` +
-    `<div style="color:#60a5fa;">// WH: ${e.wh}  Rs: ${e.rs}</div>` +
-    `<div style="color:#9ca3af;">// Status: 200 OK — Message sent ✓</div><br>`;
-  log.scrollTop = log.scrollHeight;
-  document.getElementById('gsm-count').textContent = parseInt(document.getElementById('gsm-count').textContent)+1;
-}
-
-// ── Fetch history ──
+// ── Charts ──
 async function fetchHistory(){
   try{
     const r = await fetch('/api/history');
     const h = await r.json();
-    updateCharts(h);
+    powerChart.data.labels = h.labels;
+    powerChart.data.datasets[0].data = h.power;
+    powerChart.data.datasets[1].data = h.voltage;
+    kwhChart.data.labels   = h.labels;
+    kwhChart.data.datasets[0].data = h.kwh;
+    [powerChart,kwhChart].forEach(c=>c.update('none'));
   }catch(e){console.error(e);}
 }
 
-// ── Fetch log table ──
+// ── Log table ──
 async function fetchLogs(){
   try{
     const r = await fetch('/api/logs');
@@ -556,18 +505,34 @@ async function fetchLogs(){
     const tbody = document.getElementById('log-tbody');
     tbody.innerHTML = d.logs.map((row,i)=>
       `<tr>
+        <td class="text-muted">${i+1}</td>
         <td><code class="small">${row.time}</code></td>
-        <td>${row.vrms}</td>
-        <td>${row.irms}</td>
-        <td><span class="badge bg-danger">${parseFloat(row.power).toFixed(1)}</span></td>
-        <td>${parseFloat(row.WH).toFixed(6)}</td>
-        <td>${parseFloat(row.rupees).toFixed(5)}</td>
-      </tr>`).join('') || '<tr><td colspan="6" class="text-center text-muted">No data.</td></tr>';
+        <td><span class="badge bg-info text-dark">${row.voltage}V</span></td>
+        <td>${row.current}A</td>
+        <td><span class="badge bg-danger">${row.power}W</span></td>
+        <td>${row.kwh} kWh</td>
+        <td><strong class="text-warning">₹${row.sum_rupees}</strong></td>
+      </tr>`
+    ).join('') || '<tr><td colspan="7" class="text-center text-muted py-3">No data.</td></tr>';
   }catch(e){console.error(e);}
 }
 
+async function toggleAppliance(name){
+  const r = await fetch('/api/appliance',{method:'POST',
+    headers:{'Content-Type':'application/json'},body:JSON.stringify({name})});
+  fetchCurrent();
+}
+
+async function sendBill(){
+  const mobile = document.getElementById('mobile-input').value.trim() || '9876543210';
+  await fetch('/api/send_bill',{method:'POST',
+    headers:{'Content-Type':'application/json'},body:JSON.stringify({mobile})});
+  fetchCurrent();
+  alert('✅ Bill SMS sent via SIM900 GSM to '+mobile);
+}
+
 async function resetMeter(){
-  if(!confirm('Reset all energy data and meter?')) return;
+  if(!confirm('Reset the energy meter? This will clear all accumulated readings.')) return;
   await fetch('/api/reset_meter',{method:'POST'});
   alert('Meter reset!'); location.reload();
 }
@@ -578,9 +543,9 @@ tick(); setInterval(tick,1000);
 
 // Auto refresh
 fetchCurrent(); fetchHistory(); fetchLogs();
-setInterval(fetchCurrent,  3000);
-setInterval(fetchHistory,  6000);
-setInterval(fetchLogs,     8000);
+setInterval(fetchCurrent,  4000);
+setInterval(fetchHistory,  8000);
+setInterval(fetchLogs,    12000);
 </script>
 </body>
 </html>
